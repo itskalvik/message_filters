@@ -253,14 +253,16 @@ class ApproximateTimeSynchronizer(TimeSynchronizer):
     avoid this as much as you can, since the delays are unpredictable.
     """
 
-    def __init__(self, fs, queue_size, slop, allow_headerless=False):
+    def __init__(self, fs, queue_size, slop, allow_headerless=False,
+                 sync_arrival_time=False):
         TimeSynchronizer.__init__(self, fs, queue_size)
         self.slop = Duration(seconds=slop)
         self.allow_headerless = allow_headerless
+        self.sync_arrival_time = sync_arrival_time
 
     def add(self, msg, my_queue, my_queue_index=None):
-        if not hasattr(msg, 'header') or not hasattr(msg.header, 'stamp'):
-            if not self.allow_headerless:
+        if not hasattr(msg, 'header') or not hasattr(msg.header, 'stamp') or self.sync_arrival_time:
+            if not self.allow_headerless and not self.sync_arrival_time:
                 msg_filters_logger = rclpy.logging.get_logger('message_filters_approx')
                 msg_filters_logger.set_level(LoggingSeverity.INFO)
                 msg_filters_logger.warn("can not use message filters for "
